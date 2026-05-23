@@ -11,7 +11,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 🔓 خطوة فك ضغط ملف المشروع مالتك
+      # 🔓 خطوة فك ضغط ملف المشرثوع مالتك
       - name: Unzip project file
         run: |
           unzip "my_app (2).zip" -d extracted_project
