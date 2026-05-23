@@ -1,60 +1,38 @@
-name: Build Flutter IPA
+name: Build iOS IPA
 
 on:
-  push:
-    branches: [ "main", "master" ]
-  workflow_dispatch:
+  workflow_dispatch: # يخليك تشغل البناء بيدك شوكت ما تريد
 
 jobs:
   build:
     runs-on: macos-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Unzip project if exists
-      run: |
-        if [ -f "my_app.zip" ]; then
-          unzip my_app.zip
-        fi
+      # 🔓 خطوة فك ضغط ملف المشروع مالتك
+      - name: Unzip project file
+        run: |
+          unzip "my_app (2).zip" -d extracted_project
+          # نقل الملفات للمجلد الرئيسي حتى السيرفر يشوفها مباشرة
+          mv extracted_project/*/* . || mv extracted_project/* . || true
 
-    - name: Set up Java
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'zulu'
-        java-version: '17'
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
 
-    - name: Set up Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        channel: 'stable'
+      - name: Install dependencies
+        run: flutter pub get
 
-    - name: Install dependencies
-      run: |
-        if [ -d "my_app" ]; then cd my_app; fi
-        flutter pub get
+      # 🏗️ أمر بناء الـ IPA بدون توقيع (Unsigned) حتى ينبني مباشرة على السيرفر
+      - name: Build IPA
+        run: flutter build ipa --no-codesign
 
-    - name: Build IPA (No Sign)
-      run: |
-        if [ -d "my_app" ]; then cd my_app; fi
-        flutter build ipa --no-codesign
-
-    - name: Package IPA for Sideloading
-      run: |
-        # التأكد من الدخول للمجلد الصحيح قبل التحويل
-        if [ -d "my_app" ]; then 
-          cd my_app
-        fi
-        mkdir -p build/ios/iphoneos/Payload
-        cp -r build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app build/ios/iphoneos/Payload/
-        cd build/ios/iphoneos
-        zip -r FollwerkApp.ipa Payload
-
-    - name: Upload IPA Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: Follwerk-iOS-IPA
-        path: |
-          build/ios/iphoneos/FollwerkApp.ipa
-          my_app/build/ios/iphoneos/FollwerkApp.ipa
+      # 📤 رفع ملف الـ IPA الناتج حتى تكدر تحمله لحاسبتك
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-app-ipa
+          path: build/ios/ipa/*.ipa
