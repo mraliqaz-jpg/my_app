@@ -1,7 +1,7 @@
 name: Build iOS IPA
 
 on:
-  workflow_dispatch: # يخليك تشغل البناء بيدك شوكت ما تريد
+  workflow_dispatch: # يخلي الزر يظهر الك حتى تشغله بيدك
 
 jobs:
   build:
@@ -11,12 +11,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 🔓 خطوة فك ضغط ملف المشرثوع مالتك
+      # 🔓 فك الضغط وتشخيص اسم المجلد الداخلي
       - name: Unzip project file
         run: |
           unzip "my_app (2).zip" -d extracted_project
-          # نقل الملفات للمجلد الرئيسي حتى السيرفر يشوفها مباشرة
-          mv extracted_project/*/* . || mv extracted_project/* . || true
+          # نقل كل المحتويات للمجلد الرئيسي مباشرة عشان فلاتر يشوفها
+          find extracted_project -maxdepth 3 -name "pubspec.yaml" -exec dirname {} \; | head -n 1 > project_path.txt
+          PROJECT_DIR=$(cat project_path.txt)
+          mv $PROJECT_DIR/* . || true
+          mv $PROJECT_DIR/.* . || true
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -26,11 +29,11 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      # 🏗️ أمر بناء الـ IPA بدون توقيع (Unsigned) حتى ينبني مباشرة على السيرفر
+      # 🏗️ بناء الـ IPA بدون توقيع رقمي عشان ينجح ع السيرفر
       - name: Build IPA
         run: flutter build ipa --no-codesign
 
-      # 📤 رفع ملف الـ IPA الناتج حتى تكدر تحمله لحاسبتك
+      # 📤 رفع ملف الـ IPA النهائي للتحميل
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
