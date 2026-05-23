@@ -13,7 +13,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 🔓 خطوة فك ضغط الملف وتشخيص مكانه
+      # 🔓 فك ضغط ملف المشروع
       - name: Unzip project file
         run: |
           unzip "my_app (2).zip" -d extracted_project
@@ -30,13 +30,19 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      # 🏗️ بناء الـ IPA بدون توقيع رقمي عشان ينجح ع السيرفر
-      - name: Build IPA
-        run: flutter build ipa --no-codesign
+      # 🏗️ بناء الأرشيف والتطبيق للأيفون بالمسار الصح
+      - name: Build iOS Archive
+        run: |
+          flutter build ios --no-codesign --release
+          mkdir -p build/ios/ipa
+          cd build/ios/iphoneos
+          mkdir -p Payload
+          mv Runner.app Payload/
+          zip -r ../ipa/my_app.ipa Payload
 
-      # 📤 رفع ملف الـ IPA النهائي للتحميل
+      # 📤 رفع ملف الـ IPA النهائي للتحميل مباشرة
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ios-app-ipa
-          path: build/ios/ipa/*.ipa
+          path: build/ios/ipa/my_app.ipa
