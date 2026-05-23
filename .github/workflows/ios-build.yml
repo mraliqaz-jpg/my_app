@@ -1,0 +1,62 @@
+name: Build Flutter IPA
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Unzip project if exists
+      run: |
+        if [ -f "my_app.zip" ]; then
+          unzip my_app.zip
+        fi
+
+    - name: Set up Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        channel: 'stable'
+
+    - name: Install dependencies
+      run: |
+        if [ -d "my_app" ]; then
+          cd my_app
+        fi
+        flutter pub get
+
+    - name: Build IPA (No Sign)
+      run: |
+        if [ -d "my_app" ]; then
+          cd my_app
+        fi
+        flutter build ipa --no-codesign
+
+    - name: Package IPA for Sideloading
+      run: |
+        if [ -d "my_app" ]; then
+          cd my_app
+        fi
+        mv build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app build/ios/iphoneos/Payload
+        cd build/ios/iphoneos
+        zip -r FollwerkApp.ipa Payload
+
+    - name: Upload IPA Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: Follwerk-iOS-IPA
+        path: |
+          build/ios/iphoneos/FollwerkApp.ipa
+          my_app/build/ios/iphoneos/FollwerkApp.ipa
