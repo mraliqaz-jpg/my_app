@@ -32,24 +32,22 @@ jobs:
 
     - name: Install dependencies
       run: |
-        if [ -d "my_app" ]; then
-          cd my_app
-        fi
+        if [ -d "my_app" ]; then cd my_app; fi
         flutter pub get
 
     - name: Build IPA (No Sign)
       run: |
-        if [ -d "my_app" ]; then
-          cd my_app
-        fi
+        if [ -d "my_app" ]; then cd my_app; fi
         flutter build ipa --no-codesign
 
     - name: Package IPA for Sideloading
       run: |
-        if [ -d "my_app" ]; then
+        # التأكد من الدخول للمجلد الصحيح قبل التحويل
+        if [ -d "my_app" ]; then 
           cd my_app
         fi
-        mv build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app build/ios/iphoneos/Payload
+        mkdir -p build/ios/iphoneos/Payload
+        cp -r build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app build/ios/iphoneos/Payload/
         cd build/ios/iphoneos
         zip -r FollwerkApp.ipa Payload
 
